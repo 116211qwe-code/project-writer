@@ -1,0 +1,25 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "protect-main-branch",
+  "version": "0.0.4",
+  "description": "Keeps agents off main and master: a git hook reads the current branch at commit time and parses the refs being pushed at push time. The hook refuses a violation only where it is installed. As skill text alone this is advice, and nothing stops one.",
+  "author": {
+    "name": "chock-core"
+  },
+  "repository": "https://github.com/open-coder-ai/chock-catalog",
+  "license": "Apache-2.0",
+  "keywords": [
+    "chock",
+    "policy-as-code",
+    "hook",
+    "block"
+  ],
+  "extensions": {
+    "io.github.open-coder-ai": {
+      "manifest": "manifest.yaml",
+      "artifact": "hook",
+      "enforcement": "block",
+      "coverage_without_chock": "advisory"
+    }
+  }
+}

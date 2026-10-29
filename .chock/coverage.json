@@ -1,0 +1,30 @@
+{
+  "block-destructive-commands": {
+    "codex": {
+      "level": "best-effort",
+      "basis": "live-run-partial",
+      "witnessed": false
+    }
+  },
+  "block-no-verify": {
+    "codex": {
+      "level": "best-effort",
+      "basis": "live-run-partial",
+      "witnessed": false
+    }
+  },
+  "protect-agent-config": {
+    "codex": {
+      "level": "best-effort",
+      "basis": "live-run-partial",
+      "witnessed": false
+    }
+  },
+  "protect-main-branch": {
+    "codex": {
+      "level": "enforced-at-commit",
+      "basis": null,
+      "witnessed": false
+    }
+  }
+}

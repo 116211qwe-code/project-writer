@@ -1,0 +1,133 @@
+id: block-no-verify
+name: "Block Skipping Git Hooks"
+version: "0.5.3"
+description: >
+  Friction, not a security boundary: refuses agent commands that skip git hooks. --no-verify on
+  commit/push/merge/am/rebase/pull/cherry-pick/revert, -n on commit/am; core.hooksPath set by -c,
+  git config or GIT_CONFIG_*; HUSKY=0, SKIP=, LEFTHOOK=0 and kin; hook manager uninstall; aliases
+  and rebase --exec defined in the command. Asks on plumbing, unset hooksPath, another GIT_DIR and
+  config files. Refuses person-only CHOCK_*/marker changes. Mandatory. Misses: older aliases, scripts, $VARs.
+artifact: rule
+enforcement: advise
+mandatory: true
+rule:
+  text: |
+    never(commit|push|merge|am|rebase|pull|cherry-pick|revert): --no-verify|-n(commit|am); never(set): core.hooksPath|HUSKY=0|SKIP=|LEFTHOOK=0|kin; never: pre-commit|lefthook|husky uninstall; ask: commit-tree|update-ref|GIT_DIR|config files
+    never(agent_set|unset): CHOCK_ALLOW*|CHOCK_AGENT_COMMIT|CHOCK_DIFF_LIMIT|CLAUDECODE|AI_AGENT; if(hook_fails|override_needed): fix_issue|ask_person
+effects:
+- read_only
+approval:
+  required: false
+
+provenance:
+  author: "chock-core"
+  created_at: "2026-07-12T00:00:00Z"
+  updated_at: "2026-10-27T00:00:00Z"
+  source_repo: "https://github.com/open-coder-ai/chock-catalog"
+  license: "Apache-2.0"
+  trust_tier: "community"
+
+lifecycle:
+  status: production
+  reviewed_by:
+    - "chock-core"
+
+security:
+  content_instructions: never-obey
+
+changelog:
+- version: 0.5.3
+  date: '2026-10-27'
+  changes:
+  - "Title wording only (IR-F40): \"Block No-Verify\" is now \"Block Skipping Git Hooks\". The id, guard and tests are unchanged."
+- version: 0.5.2
+  date: '2026-10-24'
+  changes:
+  - "Behaviour change, added coverage for the environment wipe (SR-2d1; eval cases tc-114 to tc-117; tests in test_block_no_verify_env_wipe.py). `env -i` is now read from the parsed command instead of raw text, so a wipe through the program's full path, a quoted `env`, an abbreviated `--ignore-environment`, a lone `-` or an `env -S` string is refused in front of a hook-running git command, as the bare form was. Shared shell reader updated (SR-2d1; the copy in implementations/chock_shellparse is regenerated, this policy's own script is unchanged). Added coverage: an arithmetic shift in `$(( ))`, `(( ))` or `$[ ]` is no longer read as the start of a here-document, so the lines after it are judged as before; the string given to `env -S` or `--split-string` is read as the command env runs; `env -i` is recorded on the command it runs. Tests: test_shellparse_sr2d1.py."
+- version: 0.5.1
+  date: '2026-10-24'
+  changes:
+  - "Behaviour change, added coverage for three more ways to switch the hooks chock installs off (SR-1c; eval cases tc-109 to tc-113; tests in test_block_no_verify_launcher.py). Refused: writing the `chock.python` git key (the interpreter chock's launcher runs hooks under), as `git config`, `-c` or the GIT_CONFIG_* variables; `git config --unset core.hooksPath` and `--unset-all`, which asked a person and now refuse as setting the key does (`--remove-section core` still asks); `git config --file <repo>/.git/config <key> <value>`, a direct write to the repository config. Reads (`--get`, `--list`, a key alone) and other `--file` targets pass."
+- version: 0.5.0
+  date: '2026-10-19'
+  changes:
+  - "Behaviour change, the policy cannot be switched off from the config it guards (chock review B1, M2; pre-release fix CAT-6). `mandatory: true`: the engine ignores this policy in `.chock/config.yaml` `policies.disabled` (POL-1), `chock disable` refuses it, and `chock validate` reports a config entry that names it as dead. This policy refuses the commands that skip the hooks chock installs and the person-only variables that answer or lower them; a config line that disabled it would have lifted both in one unguarded write (the review's chain wrote that line through a wrapper script and ran `chock sync`). Guard verdicts are unchanged, so no eval case is added; the flag is a manifest fact the engine reads."
+- version: 0.4.4
+  date: '2026-10-07'
+  changes:
+  - "Status draft -> production by the BV-C3 promotion rule, measured at catalog main 9e3e2fe: every eval case executed and passing in the replay, tier best-effort, no open bug issue, no chock check warning. Behaviour unchanged."
+- version: 0.4.3
+  date: '2026-10-03'
+  changes:
+  - "a lone + ends shell options like -"
+- version: 0.0.1
+  date: '2026-07-12'
+  changes:
+  - "Initial public baseline (0.0.1); pre-release iteration history is preserved in git log."
+- version: 0.0.2
+  date: '2026-08-22'
+  changes:
+  - "Block git -c core.hooksPath=... (case-insensitive, matched only as the -c value): disabling hooks by config is the same act as --no-verify. Bare valueless form deliberately unmatched; git rejects it with rc=128 before any hook runs."
+- version: 0.0.3
+  date: '2026-08-22'
+  changes:
+  - "Delivery bump for the Claude-format plugin packages built from this policy: on republish, their PreToolUse command is a single python3 invocation (the proposed interpreter-fallback chain was rejected after review proved it could erase deny verdicts) and their descriptions state the per-client fail posture. Guard logic and this repo's own artifacts are unchanged."
+- version: 0.0.4
+  date: '2026-08-23'
+  changes:
+  - "Short -n now reads as --no-verify only on git commit. On git push, -n is --dry-run -- non-mutating and not a hook bypass (pre-push still runs) -- and the guard wrongly refused it (found in external review of the Copilot marketplace submission). --no-verify stays blocked on both commit and push. Also: only the first commit/push token is the subcommand (a ref named 'commit' no longer reclassifies a push), and a cluster starting with a value-taking option (-m/-F) is that option's value, so -mnote is not a bypass. Five eval cases added."
+- version: 0.0.5
+  date: '2026-08-24'
+  changes:
+  - "Prefix-match --no-verify (hardening review): git accepts any unambiguous prefix, so `--no-veri` and `--no-verif` skip hooks exactly as `--no-verify`. Matched as a prefix of --no-verify at least 9 chars long -- the floor is `--no-veri`, because `--no-ver` and shorter collide with --no-verbose, which git rejects as ambiguous (nothing to block there). Applies to both commit and push. Three eval cases added (--no-veri block, --no-ver allow at the floor, push --no-verif block)."
+- version: 0.0.6
+  date: '2026-08-26'
+  changes:
+  - "Detect the REAL git subcommand (catalog #11): the subcommand is now the first non-option token after git's global options (-c/-C/--git-dir/--work-tree/... consume their value), not merely the first `commit`/`push` token anywhere. `git status -- commit -c core.hooksPath=/tmp` is `status` -- a pathspec named `commit` no longer reclassifies it as a commit and trips the hooksPath/--no-verify checks. Real `git commit`/`git push` (incl. `git -c core.hooksPath=... commit` and `git -C <dir> commit --no-verify`) still block. One negative eval case added."
+- version: 0.0.7
+  date: '2026-09-24'
+  changes:
+  - "Eval cases added so every guard statement is exercised: the real-subcommand scan's
+    attached `--flag=value` global option and standalone single-dash flag before the
+    subcommand (`git --git-dir=... -p commit --no-verify`, refused), and a bare `git
+    --version` with no commit/push subcommand at all (allowed). Guard unchanged."
+- version: 0.1.0
+  date: '2026-09-29'
+  changes:
+  - "Ported from bash to Python: implementations/block-no-verify.py replaces the bash script, stdlib only, deterministic, no network. It ships beside the chock_shellparse package (identical in every ported policy; tests pin the copies), which reads the command with a quote-aware lexer instead of scanning text: it splits at unquoted && || ; | & and newlines, drops redirections and comments, keeps heredoc bodies, and looks through bash|sh|zsh -c, pwsh -Command, cmd /c, eval, sudo, doas, env VAR=x, command, exec, nohup, timeout, nice, time, xargs and subshells, so `cd repo && ...` and `bash -c '...'` are judged on the command they run and `echo ...` on none. Unbalanced quotes fall back to a split at separators and whitespace that still sees redirections and reads an unclosed quote as one word; CHOCK_TOOL=powershell|pwsh selects PowerShell reading (backslash paths, cmdlets), and without it the text decides. An unexpected exception exits 2 (a guard fault), never 1 (a block)."
+  - "Bypasses closed, each with eval cases: `cd repo && git commit --no-verify`, `bash -c 'git commit --no-verify'`, and the same behind sudo/env/xargs/pwsh -Command; `git config core.hooksPath <path>` in any scope (reading the value with --get, listing, or unsetting it stays allowed); `--config-env=core.hooksPath=VAR`; and the environment forms GIT_CONFIG_COUNT with GIT_CONFIG_KEY_n=core.hooksPath (inline or exported on an earlier line) and GIT_CONFIG_PARAMETERS. A separator inside quotes (`-m ';' --no-verify`) no longer hides the flag."
+  - "False block removed: the value of -m/-F/-C/-c/--message and the like is skipped, so `git commit -m \"-n stays in the message\"` is allowed, and `echo git commit --no-verify` is not a commit. The flag rules are otherwise unchanged: --no-verify and its unambiguous prefixes (--no-veri floor) on commit and push, short -n only on commit."
+- version: 0.2.0
+  date: '2026-09-29'
+  changes:
+  - "Refuse an agent command that SETS a person-only override, so the engine's CHOCK_ALLOW (answers an ask gate at commit or push) and CHOCK_AGENT_COMMIT (0/false says a person is committing) cannot be defeated from inside the command, nor limit-diff-size's CHOCK_ALLOW_LARGE_DIFF and CHOCK_DIFF_LIMIT. Every spelling is read from the parsed command: an env prefix, env and sudo wrappers, export (also with a trailing note), declare/typeset/readonly/local -x, make NAME=v, set NAME=v and setx/setenv, PowerShell $env:NAME = v (also += and a value holding a slash), Set-Item/New-Item Env:NAME and [Environment]::SetEnvironmentVariable, each also inside bash -c or pwsh -Command. Reading is not setting: echo $CHOCK_ALLOW, grep CHOCK_ALLOW file, printenv and a quoted commit message stay allowed. The refusal names the variable and tells the agent to ask the person to run the command themselves."
+  - "-n is --no-verify only where git says so: git commit and git am. `python -m pytest -q -n auto`, git merge -n (--no-stat), git rebase -n and git push -n are not bypasses and stay allowed. --no-verify (and its --no-veri floor) and the core.hooksPath checks now cover merge, am and rebase as well as commit and push, since each runs hooks that flag skips. Twenty-one eval cases and the pytest rows pin both directions."
+- version: 0.3.0
+  date: '2026-09-29'
+  changes:
+  - "Refuse an agent command that hides the markers the engine detects an agent by, the same bypass as CHOCK_AGENT_COMMIT=0: `unset` / `unset -v` of CLAUDECODE, AI_AGENT or CHOCK_AGENT_COMMIT; `env -u NAME`, `env -uNAME` and `env --unset[=]NAME`; `env -i` (or `--ignore-environment`, or a lone `-`) in front of a commit, push, merge, am or rebase, since it wipes the whole environment; any assignment to a marker (`CLAUDECODE= git commit`, `AI_AGENT=0 ...`, export, declare, set, `$env:X = $null`); `export -n`; fish `set -e`; PowerShell `Remove-Item`/`Clear-Item Env:NAME` and `[Environment]::SetEnvironmentVariable`; each also inside bash -c or pwsh -Command. Reading stays allowed (`echo $CLAUDECODE`, `printenv AI_AGENT`, `env | grep CLAUDECODE`), as do `env -i` in front of a non-git program and text inside a quoted message. CLAUDECODE and AI_AGENT now count as person-only variables for every spelling the override guard reads."
+  - "eval keeps its exports: chock_shellparse now returns the environment an `eval` script leaves behind, so `eval 'export CHOCK_ALLOW=x'; git commit` is refused (a `bash -c` script is a child shell and still leaks nothing). The lexer change is copied byte for byte into every policy that ships it. Nineteen eval cases (suite.yaml folds each case onto two lines to stay under the line budget) and pytest rows pin both directions."
+- version: 0.3.1
+  date: '2026-09-30'
+  changes:
+  - "Wording only, verdicts unchanged: the description now says the guard also covers merge, am and rebase and -n on am (and commit), and the rule text states the person-only-variable refusal. The override message said the variable 'decides whether a gate sees an agent's commit', which is wrong for CHOCK_DIFF_LIMIT and CHOCK_ALLOW_LARGE_DIFF; it now calls each a person-only setting (who is committing, an ask answer, the diff limit). The description fits the 500-char budget. source_repo points at chock-catalog."
+- version: 0.3.2
+  date: '2026-09-30'
+  changes:
+  - "Behaviour change: CHOCK_ROLLOUT and CHOCK_GATE_LOG are person-only variables, refused like CHOCK_ALLOW. CHOCK_ROLLOUT=observe or ask lowers the compiled gates to a warning or an ask for a person's own commit or push, and the engine ignores it when it sees an agent marker; refusing it here covers agents that set no marker. CHOCK_GATE_LOG=0 switches off the gate log."
+- version: 0.4.0
+  date: '2026-10-02'
+  changes:
+  - "Behaviour change (HP04, roadmap 5.1): the hook-skip long option is refused on pull, cherry-pick and revert too (git 2.43 rejects it on the last two; it is refused as an attempt). Options are read with each subcommand's own value-taking table, so `merge --squash`, `am -c` or `rebase -m` no longer hide the next word, and `commit -tn` (template n) is not a skip. Brace groups (`{--no-verify,}`) and bash ANSI-C and locale quoting ($'..', $\"..\") are expanded before reading."
+  - "Hook managers' own off switches are refused on a hook-running git command or when left set for later commands (export, declare -x, fish set -x, cmd set, setx, PowerShell $env: and Set-Item Env:): HUSKY and LEFTHOOK set to anything but 1/true, and any non-empty HUSKY_SKIP_HOOKS, SKIP, LEFTHOOK_EXCLUDE, LEFTHOOK_CONFIG or PRE_COMMIT_ALLOW_NO_CONFIG. `HUSKY=0 npm ci` stays allowed: it skips an install step, not a hook run; so does `make test SKIP=slow`. pre-commit, lefthook and husky uninstall are refused, also behind npx, pnpm exec, yarn, uvx, pipx run and python -m. Launchers (uv run, poetry run, npx), fish -c, busybox and PowerShell iex are looked through."
+  - "Aliases and scripts git runs are read where the command defines them: `git -c alias.X=...`, `git config [set] alias.X ...`, GIT_CONFIG_KEY_n/VALUE_n, GIT_CONFIG_PARAMETERS and --config-env aliases, both the definition and a call with its arguments; `git rebase -x/--exec` (also clustered as -ix and abbreviated as --ex, --exe) and `git submodule foreach`, each judged as the command it runs (three levels deep; deeper asks). core.hooksPath set by config on any git command is refused, and GIT_CONFIG_* left set for later commands (export, declare, set, $env:) is judged as git reads it (GIT_CONFIG_COUNT read like strtoul)."
+  - "New asks (exit 3, a person answers): commit-tree, update-ref (not -d), fast-import and send-pack, which write commits or refs or push without running a hook; unsetting core.hooksPath (or removing the core section), which uninstalls husky and other managers that install through it; GIT_DIR, GIT_COMMON_DIR or --git-dir naming another repository; GIT_CONFIG_GLOBAL/SYSTEM, HOME and XDG_CONFIG_HOME on a hook-running command, and include.path/includeIf or help.autocorrect config. A block anywhere on the line wins over an ask. When CHOCK_TOOL does not name the shell, the line is read as bash and as PowerShell and the stricter verdict is kept."
+  - "Fail closed on an unparsed line (correction C3): when shlex cannot split the command (the hook sets CHOCK_ARGV_FALLBACK=1; the guard also checks itself, for the eval runner), a line that names a bypass token is refused; a comment or ANSI-C quoting no longer counts as unparsed. Eval cases tc-080 to tc-108 and two pytest tables pin both directions; the new checks live in implementations/hook_bypass/ to keep every file under 300 lines. Found by a separate adversarial review and fixed before review: alias arguments, per-subcommand options, rebase --exec spellings, exported GIT_CONFIG_*, block-over-ask ordering, ANSI-C quoting, brace expansion, shell detection, cmd set case and three false refusals; a second round: a line that leaves a here-document open no longer crashes the guard (the exports before it are read; a body that hides the rest of the line asks), launcher option values (`uv run --python 3.12 git ...`, `pnpm --filter app exec`, `pre-commit==3.7`), `--remove-section core` (asks), `fish --command`, and .NET SetEnvironmentVariable for the watched variables; a third round: a here-document body (a commit message) no longer makes the line count as unparsed, and a shell behind a launcher (`uv run bash -c`) is read."
+- version: 0.4.1
+  date: '2026-10-02'
+  changes:
+  - "The shared command reader (chock_shellparse, the same copy in every Python guard) changed: it skips a `--` and the shell options between `-c` and the script (`bash -c -- '...'`, `sh -c -x '...'`, `eval -- '...'`), reads `name=(...)`, `name+=` and `name[i]=` assignments, looks through the `{` that opens a function body or group, and splits a line whose quotes do not balance in one pass (it was cubic: seconds at 4 KB, a minute at 8 KB). What this policy refuses is otherwise unchanged; it now also judges the command inside those forms. See protect-agent-config 0.2.6."
+- version: 0.4.2
+  date: '2026-10-03'
+  changes:
+  - "The shared command reader (chock_shellparse, the same copy in every Python guard) changed: in a short-option cluster every `o` or `O` takes the next word (`bash -co pipefail '...'`, `-oc`, `-Oc extglob`, `-c -oe pipefail`) and a lone `-` ends the options as `--` does (`sh -c - '...'`), so the script behind them is read and judged. What this policy refuses is otherwise unchanged; it now also judges the command inside those forms. See protect-agent-config 0.2.7."

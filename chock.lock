@@ -1,0 +1,38 @@
+{
+  "lockfile_version": "1",
+  "engine": ">=0.1,<0.2",
+  "packs": [
+    {
+      "id": "block-destructive-commands",
+      "version": "0.0.1",
+      "managed": false,
+      "sha256": "72ea908779626852753b0ddf64b55335131f1e4e81c489e63bf674d684a4ec45",
+      "source": "local",
+      "artifacts_sha256": "68821f03695cd3170960f05eb327e57e10eb8aaf09cd29ee2d6aef30ba958af9"
+    },
+    {
+      "id": "block-no-verify",
+      "version": "0.0.1",
+      "managed": false,
+      "sha256": "9aed4b0ba96beedcbe69bd750d6e7b3786bbde1baa2dd436817bbd9421a4f987",
+      "source": "local",
+      "artifacts_sha256": "4cad777b3b1ce42576c1e4b8511761fb11ee7bc1ee29d5ade385fccff01a8d81"
+    },
+    {
+      "id": "protect-agent-config",
+      "version": "0.0.1",
+      "managed": false,
+      "sha256": "645209a149998d7563fc6495109571bf1d2ef18188d4e3fcc0b1a5d3eedc56f4",
+      "source": "local",
+      "artifacts_sha256": "041fdbc75e0d33b840a882e779eab1b5dc7e11f879da81166d8158d054c7602f"
+    },
+    {
+      "id": "protect-main-branch",
+      "version": "0.0.1",
+      "managed": false,
+      "sha256": "6613b44ea06affae018250660331b0fb254710dc9f9e72cd5e81826e07ce5a05",
+      "source": "local",
+      "artifacts_sha256": "18bb4772936ece0e374fb48e1a09fdbf946fb82381ed30687c0bcc8a10d4643c"
+    }
+  ]
+}
